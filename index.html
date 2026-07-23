@@ -1,0 +1,368 @@
+<!--
+  ============================================================
+  FAMILIA LEVER · Comparte tu experiencia
+  ============================================================
+  Página de una pregunta para recoger comentarios vía QR.
+
+  Funciona en 2 modos SIN cambiar nada:
+   1) Como archivo suelto / preview  -> modo DEMO (simula el envío)
+   2) Dentro de Google Apps Script   -> guarda de verdad en tu Sheet
+      (detecta automáticamente google.script.run)
+
+  PARA REBRANDEAR: cambia las variables --brand / --brand-deep abajo,
+  y reemplaza el texto/logo en el <header>.
+  ============================================================
+-->
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Familia Lever · Comparte tu experiencia</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --paper:#F7F5EF;
+    --card:#FFFFFF;
+    --ink:#231F1A;
+    --muted:#6E675C;
+    --line:#E8E2D6;
+    --brand:#1D6FB8;
+    --brand-deep:#144E86;
+    --sun:#F4A63C;
+    --danger:#C4553B;
+    --shadow:0 1px 2px rgba(35,31,26,.04), 0 12px 32px -12px rgba(35,31,26,.14);
+    --radius:20px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper) url("img/fondo.png") center center / cover no-repeat fixed;
+    color:var(--ink);
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+    min-height:100dvh;
+    overflow-x:hidden;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding:clamp(16px,4vh,40px) 20px calc(clamp(16px,4vh,40px) + env(safe-area-inset-bottom));
+  }
+
+  /* soft fresh wash behind the top */
+  .wash{
+    position:fixed;
+    inset:0 0 auto 0;
+    height:260px;
+    background:radial-gradient(120% 100% at 50% 0%, rgba(15,138,110,.10), rgba(15,138,110,0) 70%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .shell{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:396px;
+    margin:0 auto;
+  }
+
+  .brandlogo{
+    display:block;
+    width:clamp(80px,22vw,120px);
+    height:auto;
+    margin:0 auto 10px;
+  }
+
+  header{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .brandbar{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:7px 14px 7px 10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:var(--card);
+    box-shadow:var(--shadow);
+  }
+  .brandmark{
+    width:26px;height:26px;border-radius:50%;
+    background:linear-gradient(135deg,var(--brand),var(--brand-deep));
+    display:grid;place-items:center;
+    color:#fff;font-family:"Fraunces";font-weight:600;font-size:15px;
+  }
+  .brandbar span{
+    font-weight:600;font-size:13px;letter-spacing:.02em;color:var(--ink);
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:26px 20px 22px;
+    overflow:hidden;
+    margin-top:0;
+  }
+
+  .eyebrow{
+    font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--brand-deep);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:"Fraunces",serif;
+    font-weight:500;
+    font-size:clamp(25px,6.6vw,30px);
+    line-height:1.08;
+    letter-spacing:-.01em;
+    margin:0 0 8px;
+  }
+  h1 .quote{color:var(--brand);font-weight:600}
+  .lede{
+    color:var(--muted);
+    font-size:14px;
+    margin:0 0 20px;
+    max-width:38ch;
+  }
+
+  .field{margin-bottom:18px}
+  label{
+    display:block;
+    font-size:13px;font-weight:600;
+    margin-bottom:8px;
+  }
+  input[type=text],textarea{
+    width:100%;
+    font:inherit;
+    color:var(--ink);
+    background:var(--paper);
+    border:1.5px solid var(--line);
+    border-radius:14px;
+    padding:14px 15px;
+    resize:none;
+    transition:border-color .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+  textarea{min-height:128px;line-height:1.55}
+  input::placeholder,textarea::placeholder{color:#A8A092}
+  input:focus,textarea:focus{
+    outline:none;
+    border-color:var(--brand);
+    background:var(--card);
+    box-shadow:0 0 0 4px rgba(15,138,110,.12);
+  }
+
+  .counterrow{
+    display:flex;align-items:center;gap:10px;
+    margin-top:9px;
+  }
+  .bar{
+    flex:1;height:5px;border-radius:999px;background:var(--line);overflow:hidden;
+  }
+  .bar>i{
+    display:block;height:100%;width:0;border-radius:999px;
+    background:var(--brand);
+    transition:width .12s linear, background .2s ease;
+  }
+  .count{font-size:12px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+  .count.warn{color:var(--danger);font-weight:600}
+
+  button.send{
+    width:100%;
+    font:inherit;font-weight:600;font-size:15px;
+    color:#fff;
+    background:var(--brand);
+    border:none;border-radius:14px;
+    padding:13px;
+    margin-top:6px;
+    cursor:pointer;
+    display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    transition:background .18s ease, transform .06s ease;
+  }
+  button.send:hover{background:var(--brand-deep)}
+  button.send:active{transform:translateY(1px)}
+  button.send:disabled{opacity:.55;cursor:not-allowed}
+  .spinner{
+    width:17px;height:17px;border-radius:50%;
+    border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;
+    animation:spin .7s linear infinite;display:none;
+  }
+  button.send.loading .spinner{display:inline-block}
+  button.send.loading .label{opacity:.85}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .hint{
+    text-align:center;font-size:12px;color:var(--muted);
+    margin:16px 0 0;
+  }
+  .err{
+    color:var(--danger);font-size:13px;font-weight:500;
+    margin:10px 0 0;min-height:0;
+  }
+
+  /* ---- success state ---- */
+  .done{display:none;text-align:center;padding:14px 4px 8px}
+  .done.show{display:block;animation:rise .5s cubic-bezier(.2,.7,.3,1) both}
+  .checkwrap{
+    width:76px;height:76px;border-radius:50%;
+    margin:4px auto 20px;
+    background:linear-gradient(135deg,var(--brand),var(--brand-deep));
+    display:grid;place-items:center;
+    box-shadow:0 12px 28px -10px rgba(15,138,110,.6);
+    animation:pop .5s .05s cubic-bezier(.2,.9,.3,1.3) both;
+  }
+  .checkwrap svg{width:38px;height:38px}
+  .checkwrap svg path{
+    stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;fill:none;
+    stroke-dasharray:34;stroke-dashoffset:34;
+    animation:draw .45s .28s ease forwards;
+  }
+  .done h2{font-family:"Fraunces",serif;font-weight:500;font-size:26px;margin:0 0 8px}
+  .done p{color:var(--muted);font-size:15px;margin:0 auto;max-width:34ch}
+
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .footnote{
+    text-align:center;font-size:11px;color:#A8A092;margin-top:22px;letter-spacing:.02em;
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+    .checkwrap svg path{stroke-dashoffset:0}
+  }
+</style>
+
+<div class="wash"></div>
+
+<div class="shell">
+
+  <img class="brandlogo" src="img/logo.png" alt="Familia Lever">
+
+  <main class="card">
+    <!-- FORMULARIO -->
+    <div id="form">
+      <p class="eyebrow">Tu opinión cuenta</p>
+      <h1><span class="quote">“</span>¡Compártenos tu&nbsp;experiencia!<span class="quote">”</span></h1>
+      <p class="lede">Cuéntanos qué te pareció, qué te gustó o qué podríamos mejorar.</p>
+
+      <div class="field">
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" maxlength="80" autocomplete="name" placeholder="Tu nombre">
+      </div>
+
+      <div class="field">
+        <label for="comentario">Tu experiencia</label>
+        <textarea id="comentario" maxlength="1000" placeholder="Escribe aquí lo que quieras contarnos…"></textarea>
+        <div class="counterrow">
+          <div class="bar"><i id="fill"></i></div>
+          <span class="count" id="count">0 / 1000</span>
+        </div>
+      </div>
+
+      <p class="err" id="err"></p>
+
+      <button class="send" id="send">
+        <span class="spinner"></span>
+        <span class="label">Enviar mi comentario</span>
+      </button>
+
+    </div>
+
+    <!-- CONFIRMACIÓN -->
+    <div class="done" id="done">
+      <div class="checkwrap">
+        <svg viewBox="0 0 44 44"><path d="M12 23 l7 7 l14 -16"/></svg>
+      </div>
+      <h2>¡Gracias, <span id="doneName">amigo/a</span>!</h2>
+      <p>Recibimos tu comentario.</p>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ⬇️ PEGA AQUÍ la URL de tu Apps Script (la que termina en /exec).
+  //    Si la dejas vacía, la página funciona en modo DEMO (no guarda nada).
+  var ENDPOINT = "https://script.google.com/macros/s/AKfycbwwJTc4mjsdxaEYTFekzP6Mzpz80IihgEsax78tewmOIP1fhD7NkkpfHkeG5kjG3T1j/exec";
+
+  var LIMIT = 1000;
+  var nombre = document.getElementById('nombre');
+  var comentario = document.getElementById('comentario');
+  var count = document.getElementById('count');
+  var fill = document.getElementById('fill');
+  var err = document.getElementById('err');
+  var send = document.getElementById('send');
+
+  // contador en vivo
+  function refresh(){
+    var n = comentario.value.length;
+    count.textContent = n + ' / ' + LIMIT;
+    fill.style.width = (n / LIMIT * 100) + '%';
+    var near = n > LIMIT * 0.9;
+    count.classList.toggle('warn', near);
+    fill.style.background = near ? 'var(--sun)' : 'var(--brand)';
+  }
+  comentario.addEventListener('input', refresh);
+  refresh();
+
+  function setLoading(on){
+    send.classList.toggle('loading', on);
+    send.disabled = on;
+    send.querySelector('.label').textContent = on ? 'Enviando…' : 'Enviar mi comentario';
+  }
+
+  function showThanks(){
+    var name = (nombre.value || '').trim();
+    document.getElementById('doneName').textContent = name || 'amigo/a';
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('done').classList.add('show');
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+
+  function submit(){
+    err.textContent = '';
+    var nom = nombre.value.trim();
+    var com = comentario.value.trim();
+
+    if(!nom){ err.textContent = 'Escribe tu nombre para continuar.'; nombre.focus(); return; }
+    if(com.length < 3){ err.textContent = 'Cuéntanos algo más para poder enviarlo.'; comentario.focus(); return; }
+
+    setLoading(true);
+    var payload = { miembro: nom, comentario: com };
+
+    // MODO DEMO: sin URL configurada (preview / archivo suelto)
+    if (!ENDPOINT){
+      console.log('[DEMO] se guardaría:', payload);
+      setTimeout(function(){ setLoading(false); showThanks(); }, 850);
+      return;
+    }
+
+    // MODO REAL: POST directo al Apps Script.
+    // Usamos text/plain + no-cors: es una petición "simple", sin preflight,
+    // que funciona en Safari de iPhone (donde el iframe de Apps Script falla).
+    fetch(ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+    .then(function(){ setLoading(false); showThanks(); })
+    .catch(function(){
+      setLoading(false);
+      err.textContent = 'No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.';
+    });
+  }
+
+  send.addEventListener('click', submit);
+</script>
